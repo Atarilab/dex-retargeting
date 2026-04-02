@@ -1,0 +1,26 @@
+retargeting:
+  type: position
+  urdf_path: unitree_dex3/dex3_hand_right.urdf
+
+  # Position retargeting: match absolute 3D positions of fingertips + intermediate joints
+  target_link_names:
+    - "thumb_0_link"
+    - "thumb_1_link"
+    - "thumb_tip"
+    - "index_0_link"
+    - "index_tip"
+    - "middle_0_link"
+    - "middle_tip"
+
+  # Corresponding human MediaPipe keypoint indices:
+  # 1=thumb_mcp, 2=thumb_pip, 4=thumb_tip,
+  # 5=index_mcp, 8=index_tip,
+  # 9=middle_mcp, 12=middle_tip
+  target_link_human_indices: [ 1, 2, 4, 5, 8, 9, 12 ]
+
+  scaling_factor: 1.0
+
+  add_dummy_free_joint: true
+
+  normal_delta: 4.0e-3
+  huber_delta: 2.0e-2
