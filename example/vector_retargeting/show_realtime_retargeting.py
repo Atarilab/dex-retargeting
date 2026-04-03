@@ -87,8 +87,12 @@ def start_retargeting(queue: multiprocessing.Queue, robot_dir: str, config_path:
         loader.scale = 1.4
     elif "svh" in robot_name:
         loader.scale = 1.5
+    elif "dex3" in robot_name:
+        loader.scale = 1.4
 
-    if "glb" not in robot_name:
+    if "dex3" in robot_name:
+        filepath = str(filepath)
+    elif "glb" not in robot_name:
         filepath = str(filepath).replace(".urdf", "_glb.urdf")
     else:
         filepath = str(filepath)
@@ -109,6 +113,8 @@ def start_retargeting(queue: multiprocessing.Queue, robot_dir: str, config_path:
         robot.set_pose(sapien.Pose([0, 0, -0.15]))
     elif "svh" in robot_name:
         robot.set_pose(sapien.Pose([0, 0, -0.13]))
+    elif "dex3" in robot_name:
+        robot.set_pose(sapien.Pose([0, 0, -0.1]))
 
     # Different robot loader may have different orders for joints
     sapien_joint_names = [joint.get_name() for joint in robot.get_active_joints()]
