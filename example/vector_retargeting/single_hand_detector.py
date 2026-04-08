@@ -30,6 +30,7 @@ class SingleHandDetector:
         min_detection_confidence=0.8,
         min_tracking_confidence=0.8,
         selfie=False,
+        thumb_remap=None,
     ):
         self.hand_detector = mp.solutions.hands.Hands(
             static_image_mode=False,
@@ -43,6 +44,9 @@ class SingleHandDetector:
         )
         inverse_hand_dict = {"Right": "Left", "Left": "Right"}
         self.detected_hand_type = hand_type if selfie else inverse_hand_dict[hand_type]
+        self.thumb_remap = (
+            np.asarray(thumb_remap, dtype=np.float64) if thumb_remap is not None else None
+        )
 
     @staticmethod
     def draw_skeleton_on_image(
@@ -101,6 +105,12 @@ class SingleHandDetector:
         keypoint_3d_array = keypoint_3d_array - keypoint_3d_array[0:1, :]
         mediapipe_wrist_rot = self.estimate_frame_from_hand_points(keypoint_3d_array)
         joint_pos = keypoint_3d_array @ mediapipe_wrist_rot @ self.operator2mano
+
+        # Re-root the human thumb chain so its base sits where the robot thumb base
+        # is mounted (e.g. Dex3 has a laterally-mounted thumb). Only thumb landmarks
+        # [1, 2, 3, 4] are translated; the rest of the hand is unchanged.
+        if self.thumb_remap is not None:
+            joint_pos[1:5, :] = joint_pos[1:5, :] + self.thumb_remap
 
         return num_box, joint_pos, keypoint_2d, mediapipe_wrist_rot
 

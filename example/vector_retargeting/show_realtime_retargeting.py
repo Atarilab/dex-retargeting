@@ -2,7 +2,7 @@ import multiprocessing
 import time
 from pathlib import Path
 from queue import Empty
-from typing import Optional
+from typing import Optional, Tuple
 
 import cv2
 import numpy as np
@@ -22,13 +22,19 @@ from dex_retargeting.retargeting_config import RetargetingConfig
 from single_hand_detector import SingleHandDetector
 
 
-def start_retargeting(queue: multiprocessing.Queue, robot_dir: str, config_path: str):
+def start_retargeting(
+    queue: multiprocessing.Queue,
+    robot_dir: str,
+    config_path: str,
+    thumb_remap: Optional[Tuple[float, float, float]] = None,
+):
     RetargetingConfig.set_default_urdf_dir(str(robot_dir))
     logger.info(f"Start retargeting with config {config_path}")
     retargeting = RetargetingConfig.load_from_file(config_path).build()
 
     hand_type = "Right" if "right" in config_path.lower() else "Left"
-    detector = SingleHandDetector(hand_type=hand_type, selfie=False)
+    remap_arr = np.array(thumb_remap, dtype=np.float64) if thumb_remap is not None else None
+    detector = SingleHandDetector(hand_type=hand_type, selfie=False, thumb_remap=remap_arr)
 
     sapien.render.set_viewer_shader_dir("default")
     sapien.render.set_camera_shader_dir("default")
@@ -177,6 +183,7 @@ def main(
     retargeting_type: RetargetingType,
     hand_type: HandType,
     camera_path: Optional[str] = None,
+    thumb_remap: Optional[Tuple[float, float, float]] = None,
 ):
     """
     Detects the human hand pose from a video and translates the human pose trajectory into a robot pose trajectory.
@@ -199,7 +206,8 @@ def main(
         target=produce_frame, args=(queue, camera_path)
     )
     consumer_process = multiprocessing.Process(
-        target=start_retargeting, args=(queue, str(robot_dir), str(config_path))
+        target=start_retargeting,
+        args=(queue, str(robot_dir), str(config_path), thumb_remap),
     )
 
     producer_process.start()

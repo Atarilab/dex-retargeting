@@ -1,7 +1,9 @@
 import pickle
 from pathlib import Path
+from typing import Optional, Tuple
 
 import cv2
+import numpy as np
 import tqdm
 import tyro
 
@@ -17,7 +19,12 @@ from single_hand_detector import SingleHandDetector
 
 
 def retarget_video(
-    retargeting: SeqRetargeting, video_path: str, output_path: str, config_path: str
+    retargeting: SeqRetargeting,
+    video_path: str,
+    output_path: str,
+    config_path: str,
+    hand_type: str = "Right",
+    thumb_remap: Optional[np.ndarray] = None,
 ):
     cap = cv2.VideoCapture(video_path)
 
@@ -26,7 +33,9 @@ def retarget_video(
     if not cap.isOpened():
         print("Error: Could not open video file.")
     else:
-        detector = SingleHandDetector(hand_type="Right", selfie=False)
+        detector = SingleHandDetector(
+            hand_type=hand_type, selfie=False, thumb_remap=thumb_remap
+        )
         length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         with tqdm.tqdm(total=length) as pbar:
             while cap.isOpened():
@@ -79,6 +88,7 @@ def main(
     output_path: str,
     retargeting_type: RetargetingType,
     hand_type: HandType,
+    thumb_remap: Optional[Tuple[float, float, float]] = None,
 ):
     """
     Detects the human hand pose from a video and translates the human pose trajectory into a robot pose trajectory.
@@ -99,7 +109,16 @@ def main(
     )
     RetargetingConfig.set_default_urdf_dir(str(robot_dir))
     retargeting = RetargetingConfig.load_from_file(config_path).build()
-    retarget_video(retargeting, video_path, output_path, str(config_path))
+
+    remap_arr = np.array(thumb_remap, dtype=np.float64) if thumb_remap is not None else None
+    retarget_video(
+        retargeting,
+        video_path,
+        output_path,
+        str(config_path),
+        hand_type=hand_type.name.capitalize(),
+        thumb_remap=remap_arr,
+    )
 
 
 if __name__ == "__main__":

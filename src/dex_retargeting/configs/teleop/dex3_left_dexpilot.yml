@@ -1,0 +1,10 @@
+retargeting:
+  type: DexPilot
+  urdf_path: unitree_dex3/dex3_hand_left.urdf
+
+  # Dex3 has 3 fingers: thumb, index, middle
+  wrist_link_name: "wrist"
+  finger_tip_link_names: [ "thumb_tip", "index_tip", "middle_tip" ]
+  scaling_factor: 1.1
+
+  low_pass_alpha: 0.2
